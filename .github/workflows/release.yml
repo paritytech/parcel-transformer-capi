@@ -1,0 +1,42 @@
+name: Release
+on:
+  release:
+    types:
+      - created
+jobs:
+  publish:
+    name: Build & Publish to NPM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve Version
+        if: startsWith(github.ref, 'refs/tags/')
+        id: get_tag_version
+        run: echo "tag_version=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          registry-url: "https://registry.npmjs.org"
+      - name: Build NPM Package
+        run: npm pack
+      - uses: actions/upload-artifact@v3
+        with:
+          name: package
+          path: "./target/npm/capi-parcel-transformer*.tgz"
+      - uses: octokit/request-action@v2.x
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          route: POST /repos/paritytech/npm_publish_automation/actions/workflows/publish.yml/dispatches
+          ref: main
+          inputs: '${{ format(''{{ "repo": "{0}", "run_id": "{1}" }}'', github.repository, github.run_id) }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.NPM_PUBLISH_AUTOMATION_TOKEN }}
+      - name: Report failure
+        if: ${{ failure() }}
+        run: >
+          gh issue create
+          -a ryanleecode
+          -l failure
+          -t 'npm publish failure: ${{steps.get_tag_version.outputs.tag_version}}'
+          -b "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+        env:
+          GH_TOKEN: ${{ github.token }}
