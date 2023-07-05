@@ -1,5 +1,5 @@
 {
-    "name": "@capi/parcel-transformer",
+    "name": "parcel-transformer-capi",
     "version": "0.0.1",
     "type": "module",
     "description": "Enable Parcel support for Capi",
