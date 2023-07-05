@@ -8,20 +8,37 @@ jobs:
     name: Build & Publish to NPM
     runs-on: ubuntu-latest
     steps:
-      - name: Retrieve Version
-        if: startsWith(github.ref, 'refs/tags/')
-        id: get_tag_version
-        run: echo "tag_version=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
-      - uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: "16.x"
-          registry-url: "https://registry.npmjs.org"
-      - name: Build NPM Package
-        run: npm pack
+          node-version: 16
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 8
+          run_install: false
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm install
+      - run: pnpm pack
       - uses: actions/upload-artifact@v3
         with:
           name: package
-          path: "./target/npm/capi-parcel-transformer*.tgz"
+          path: "capi-parcel-transformer*.tgz"
       - uses: octokit/request-action@v2.x
         if: startsWith(github.ref, 'refs/tags/')
         with:
