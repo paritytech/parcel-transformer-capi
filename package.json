@@ -1,0 +1,19 @@
+{
+    "name": "@capi/parcel-transformer",
+    "version": "0.0.1",
+    "type": "module",
+    "description": "Enable Parcel support for Capi",
+    "publishConfig": {
+        "access": "public"
+    },
+    "module": "index.js",
+    "engines": {
+        "parcel": ">=2.0.0"
+    },
+    "dependencies": {
+        "@parcel/plugin": "^2.9.3"
+    },
+    "devDependencies": {
+        "@types/node": "^20.3.3"
+    }
+}
